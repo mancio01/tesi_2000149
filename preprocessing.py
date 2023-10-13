@@ -23,4 +23,3 @@ def preprocess(path):
     imm = cv2.cvtColor(imm, cv2.COLOR_YCrCb2BGR)
     return imm
 
-

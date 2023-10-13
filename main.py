@@ -1,11 +1,80 @@
-import cv2
+import imSimilarity as ims
 import os
-import Image_similitary as sim
+import json
+import cv2
+from matplotlib import pyplot as plt
+import sklearn.cluster as cl
+from sklearn.preprocessing import StandardScaler
+import numpy as np
 
-IMG_X_VERTICES = [(321, 1048), (1698, 1048), (1683, 0), (296, 0)]
-IMG_Y_VERTICES = [(192, 1048), (1690, 1048), (1635, 0), (181, 0)]
+'''
+with open(os.path.dirname(os.path.abspath(__file__)) + r"\label.json", "r") as file:
+    data = json.load(file)
+    
+sonda=0
+for k, v in data.items():
+    print(sonda)
+    for j in os.listdir(k):
+        if j.endswith("first.png"):
+            img_x = k + "\\" + j 
+        elif j.endswith("second.png"):
+            img_y = k + "\\" + j 
+    if(not v and ims.areSimilar(img_x,img_y,algorithm='clustering')):
+        print("falso positivo")
+        plt.imshow(cv2.imread(k + r"\\" + r"\DisplayImage.png"))
+        plt.show()
+    if(v and not ims.areSimilar(img_x,img_y,algorithm='clustering')):
+        print("falso negativo")
+        plt.imshow(cv2.imread(k + r"\\" + r"\DisplayImage.png"))
+        plt.show()
+    sonda=sonda+1
+'''
+with open(os.path.dirname(os.path.abspath(__file__)) + r"\measures.json", "r") as file:
+    data = json.load(file)
 
-img = cv2.imread(os.path.dirname(os.path.abspath(__file__)) + r"\filtering\train\2023-01-09-08-01-27-32-Walle-Configuration 0\2023-01-09-08-01-24-89_first.png")
-img = sim.crop_image(img,IMG_X_VERTICES)
-cv2.imshow("Immagine",img)
-cv2.waitKey(0)
+with open(os.path.dirname(os.path.abspath(__file__)) + r"\label.json", "r") as file:
+    names = json.load(file)
+    
+nt=[]
+nf=[]
+for k,v in names.items():
+    if v:
+        nt.append(k)
+    else:
+        nf.append(k)
+n=nt+nf
+
+X=[]
+Y=[]
+for i in data["true"]:
+    X.append([i["lfv"],i["uiq"],i["lfa"],i["rmse"]])
+    Y.append(True) 
+ 
+for i in data["false"]:
+    X.append([i["lfv"],i["uiq"],i["lfa"],i["rmse"]])
+    Y.append(False)
+        
+scaler=StandardScaler()
+X=scaler.fit_transform(X)
+
+t = np.count_nonzero(Y)
+model = cl.SpectralClustering(n_clusters=2, random_state=77,gamma=5)
+
+
+
+ins=[]
+
+
+cluster_labels = model.fit_predict(X)
+trues = cluster_labels[:t]
+falses = cluster_labels[t:]
+
+for i in range(len(cluster_labels)):
+    if not cluster_labels[i] and i<t:
+        plt.imshow(cv2.imread(n[i]+r"\\"+"DisplayImage.png"))
+        plt.show()
+
+print(model)
+print(trues)
+print(falses)
+ 
